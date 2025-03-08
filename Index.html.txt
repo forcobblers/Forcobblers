@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Crossing Times</title>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #f1f3f4;
+            --accent-color: #d93025;
+            --text-color: #202124;
+            --light-text: #5f6368;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 0;
+        }
+        
+        .level-crossing-info {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .location-selector {
+            margin-bottom: 20px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .status-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .active {
+            background-color: var(--accent-color);
+            animation: pulse 2s infinite;
+        }
+        
+        .inactive {
+            background-color: #34a853;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(217, 48, 37, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(217, 48, 37, 0);
+            }
+        }
+        
+        .upcoming-times {
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .current-time {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background-color: var(--secondary-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            animation: none;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .next-closing {
+            font-size: 18px;
+            padding: 15px;
+            background-color: #e8f0fe;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Elm Road Level Crossing Times</h1>
+    </header>
+    
+    <div class="container">
+        <div class="level-crossing-info">
+            <div class="location-selector">
+                <label for="crossing-select">Level Crossing:</label>
+                <select id="crossing-select" onchange="updateCrossingInfo()">
+                    <option value="elm-road">Elm Road Level Crossing</option>
+                </select>
+            </div>
+            
+            <div class="current-time" id="current-time"></div>
+            
+            <div class="status-indicator">
+                <div class="status-circle" id="status-circle"></div>
+                <div id="status-text">Crossing is currently open</div>
+            </div>
+            
+            <div class="next-closing" id="next-closing">
+                Next closure: 10:15 AM - 10:23 AM (8 minutes)
+            </div>
+            
+            <div class="filter-options">
+                <button class="filter-btn active" onclick="filterTimes('all')">All Times</button>
+                <button class="filter-btn" onclick="filterTimes('morning')">Morning</button>
+                <button class="filter-btn" onclick="filterTimes('afternoon')">Afternoon</button>
+                <button class="filter-btn" onclick="filterTimes('evening')">Evening</button>
+            </div>
+            
+            <div class="upcoming-times">
+                <h3>Today's Scheduled Closures</h3>
+                <table id="times-table">
+                    <thead>
+                        <tr>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Duration</th>
+                            <th>Train Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="times-body">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Data last updated: March 8, 2025 | Each closure lasts 3 minutes | For planning purposes only</p>
+    </footer>
+
+    <script>
+        // Crossing data
+        const crossingData = {
+            'elm-road': {
+                name: 'Elm Road Level Crossing',
+                times: [
+                    { start: '07:05', end: '07:08', type: 'Regular' },
+                    { start: '07:35', end: '07:38', type: 'Regular' },
+                    { start: '08:05', end: '08:08', type: 'Regular' },
+                    { start: '08:35', end: '08:38', type: 'Regular' },
+                    { start: '09:05', end: '09:08', type: 'Regular' },
+                    { start: '09:35', end: '09:38', type: 'Regular' },
+                    { start: '10:05', end: '10:08', type: 'Regular' },
+                    { start: '10:35', end: '10:38', type: 'Regular' },
+                    { start: '11:05', end: '11:08', type: 'Regular' },
+                    { start: '11:35', end: '11:38', type: 'Regular' },
+                    { start: '12:05', end: '12:08', type: 'Regular' },
+                    { start: '12:35', end: '12:38', type: 'Regular' },
+                    { start: '13:05', end: '13:08', type: 'Regular' },
+                    { start: '13:35', end: '13:38', type: 'Regular' },
+                    { start: '14:05', end: '14:08', type: 'Regular' },
+                    { start: '14:35', end: '14:38', type: 'Regular' },
+                    { start: '15:05', end: '15:08', type: 'Regular' },
+                    { start: '15:35', end: '15:38', type: 'Regular' },
+                    { start: '16:05', end: '16:08', type: 'Regular' },
+                    { start: '16:35', end: '16:38', type: 'Regular' },
+                    { start: '17:05', end: '17:08', type: 'Regular' },
+                    { start: '17:35', end: '17:38', type: 'Regular' },
+                    { start: '18:05', end: '18:08', type: 'Regular' },
+                    { start: '18:35', end: '18:38', type: 'Regular' },
+                    { start: '19:05', end: '19:08', type: 'Regular' },
+                    { start: '19:35', end: '19:38', type: 'Regular' },
+                    { start: '20:05', end: '20:08', type: 'Regular' },
+                    { start: '20:35', end: '20:38', type: 'Regular' },
+                    { start: '21:05', end: '21:08', type: 'Regular' }
+                ]
+            }
+        };
+
+        // Update the current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('current-time').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Convert time string to Date object
+        function timeToDate(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        }
+
+        // Calculate duration between two times
+        function calculateDuration(startTime, endTime) {
+            const start = timeToDate(startTime);
+            const end = timeToDate(endTime);
+            const diffMs = end - start;
+            const diffMins = Math.round(diffMs / 60000);
+            return diffMins;
+        }
+
+        // Check if crossing is currently down
+        function checkCrossingStatus() {
+            const now = new Date();
+            const crossing = document.getElementById('crossing-select').value;
+            const times = crossingData[crossing].times;
+            
+            let isDown = false;
+            let nextClosing = null;
+            
+            for (const time of times) {
+                const startTime = timeToDate(time.start);
+                const endTime = timeToDate(time.end);
+                
+                if (now >= startTime && now <= endTime) {
+                    isDown = true;
+                    break;
+                }
+                
+                if (startTime > now) {
+                    if (!nextClosing || startTime < timeToDate(nextClosing.start)) {
+                        nextClosing = time;
+                    }
+                }
+            }
+            
+            const statusCircle = document.getElementById('status-circle');
+            const statusText = document.getElementById('status-text');
+            const nextClosingElement = document.getElementById('next-closing');
+            
+            if (isDown) {
+                statusCircle.className = 'status-circle active';
+                statusText.textContent = 'Crossing is currently DOWN';
+                statusText.style.fontWeight = 'bold';
+                statusText.style.color = 'var(--accent-color)';
+            } else {
+                statusCircle.className = 'status-circle inactive';
+                statusText.textContent = 'Crossing is currently open';
+                statusText.style.fontWeight = 'normal';
+                statusText.style.color = 'var(--text-color)';
+            }
+            
+            if (nextClosing) {
+                const duration = calculateDuration(nextClosing.start, nextClosing.end);
+                nextClosingElement.textContent = `Next closure: ${formatTime(nextClosing.start)} - ${formatTime(nextClosing.end)} (${duration} minutes)`;
+            } else {
+                nextClosingElement.textContent = 'No more closures scheduled for today';
+            }
+        }
+
+        // Format time to AM/PM
+        function formatTime(timeStr) {
+            const [hours, minutes] = timeStr.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        // Update crossing information
+        function updateCrossingInfo() {
+            const crossing = document.getElementById('crossing-select').value;
+            populateTable(crossing, 'all');
+            checkCrossingStatus();
+        }
+
+        // Populate times table
+        function populateTable(crossing, filter) {
+            const timesBody = document.getElementById('times-body');
+            timesBody.innerHTML = '';
+            
+            let times = crossingData[crossing].times;
+            
+            if (filter !== 'all') {
+                times = times.filter(time => {
+                    const hour = parseInt(time.start.split(':')[0]);
+                    if (filter === 'morning' && hour >= 5 && hour < 12) return true;
+                    if (filter === 'afternoon' && hour >= 12 && hour < 17) return true;
+                    if (filter === 'evening' && hour >= 17) return true;
+                    return false;
+                });
+            }
+            
+            times.forEach(time => {
+                const row = document.createElement('tr');
+                
+                const startCell = document.createElement('td');
+                startCell.textContent = formatTime(time.start);
+                
+                const endCell = document.createElement('td');
+                endCell.textContent = formatTime(time.end);
+                
+                const durationCell = document.createElement('td');
+                const duration = calculateDuration(time.start, time.end);
+                durationCell.textContent = `${duration} minutes`;
+                
+                const typeCell = document.createElement('td');
+                typeCell.textContent = time.type;
+                
+                row.appendChild(startCell);
+                row.appendChild(endCell);
+                row.appendChild(durationCell);
+                row.appendChild(typeCell);
+                
+                // Highlight current or upcoming closures
+                const now = new Date();
+                const startTime = timeToDate(time.start);
+                const endTime = timeToDate(time.end);
+                
+                if (now >= startTime && now <= endTime) {
+                    row.style.backgroundColor = '#ffebee';
+                    row.style.fontWeight = 'bold';
+                }
+                
+                timesBody.appendChild(row);
+            });
+        }
+
+        // Filter times based on time of day
+        function filterTimes(filter) {
+            const crossing = document.getElementById('crossing-select').value;
+            populateTable(crossing, filter);
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Initialize
+        window.onload = function() {
+            updateCurrentTime();
+            updateCrossingInfo();
+            
+            // Update time and status every minute
+            setInterval(() => {
+                updateCurrentTime();
+                checkCrossingStatus();
+            }, 60000);
+        };
+    </script>
+</body>
+</html>
